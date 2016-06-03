@@ -181,7 +181,7 @@ class MPINetwork:
                                         self.miniTrainData[1], self.miniTrainData[2])
         partialErrorsResult[1] = self.network.error(self.miniValidationData[0], \
                                 self.miniValidationData[1], self.miniValidationData[2])
-        self.comm.Reduce(partialErrorsResult, self.errors, op=MPI.SUM)
+        self.comm.Allreduce(partialErrorsResult, self.errors, op=MPI.SUM)
         self.errors /= self.nProcesses
 
         if self.rank == 0:
