@@ -98,27 +98,37 @@ class MPINetwork:
                     vData.append(d[:self.miniBatchValidationSize * self.nProcesses])
             self.validationData = vData
 
-        if self.inputDimension == 1:
-            x_shape = (self.miniBatchValidationSize, self.nChannels, \
-                        self.inputSizeChannels[0])
-        elif self.inputDimension == 2:
-            x_shape = (self.miniBatchValidationSize, self.nChannels, \
-                        self.inputSizeChannels[0], self.inputSizeChannels[1])
-
-        x_validation = np.zeros(x_shape)
-        x_extra_validation = np.zeros((self.miniBatchValidationSize, self.nInputsExtra))
-        y_validation = np.zeros((self.miniBatchValidationSize, self.outputSize, 1))
-
         self.comm.Barrier()
         self.comm.Bcast(self.nTotalSamples)
-        self.comm.Scatter(self.validationData[0], x_validation, 0)
-        if self.validationData[1] != []:
-            self.comm.Scatter(self.validationData[1], x_extra_validation, 0)
 
-        self.comm.Scatter(self.validationData[2], y_validation, 0)
+        miniDatas = []
+        for d in [(self.trainData, int(self.nTotalSamples[0] / self.nProcesses)), \
+                  (self.validationData, self.miniBatchValidationSize)]:
+            dataset = d[0]
+            batchSize = d[1]
+            if self.inputDimension == 1:
+                x_shape = (batchSize, self.nChannels, \
+                            self.inputSizeChannels[0])
+            elif self.inputDimension == 2:
+                x_shape = (batchSize, self.nChannels, \
+                            self.inputSizeChannels[0], self.inputSizeChannels[1])
+
+            x = np.zeros(x_shape)
+            xe = np.zeros((batchSize, self.nInputsExtra))
+            y = np.zeros((batchSize, self.outputSize, 1))
+
+            self.comm.Scatter(dataset[0], x, 0)
+            if dataset[1] != []:
+                self.comm.Scatter(dataset, xe, 0)
+            else:
+                xe = []
+            self.comm.Scatter(dataset[2], y, 0)
 
 
-        self.miniValidationData = [x_validation, x_extra_validation, y_validation]
+            miniDatas.append([x, xe, y])
+
+        self.miniTrainData = miniDatas[0]
+        self.miniValidationData = miniDatas[1]
 
         if self.rank == 0:
             print "Datos cargados"
@@ -156,17 +166,6 @@ class MPINetwork:
         elif learningString.lower() == "adam":
             return Adam(self.eta)
 
-    def initError(self):
-        if self.rank == 0:
-            print "###########################################"
-            print "Calculando errores iniciales, antes de entrenar"
-            prevErrorIn = self.network.error(self.trainData[0], \
-                                             self.trainData[1], self.trainData[2])
-            print "Previous Error IN: ", prevErrorIn
-            prevErrorOut = self.network.error(self.validationData[0],
-                                    self.validationData[1], self.validationData[2])
-            print "Previous Error OUT: ", prevErrorOut
-
     def makeSaveDir(self):
         if self.rank == 0:
             os.makedirs(self.saveDir)
@@ -176,19 +175,25 @@ class MPINetwork:
             print "Guardando red en directorio ", self.saveDir
             self.network.save(self.saveDir)
 
-    def fullEpochError(self, epoch):
+    def fullEpochError(self, epoch = -1):
+        partialErrorsResult = np.zeros(2)
+        partialErrorsResult[0] = self.network.error(self.miniTrainData[0], \
+                                        self.miniTrainData[1], self.miniTrainData[2])
+        partialErrorsResult[1] = self.network.error(self.miniValidationData[0], \
+                                self.miniValidationData[1], self.miniValidationData[2])
+        self.comm.Reduce(partialErrorsResult, self.errors, op=MPI.SUM)
+        self.errors /= self.nProcesses
+
         if self.rank == 0:
             print "###########################################"
-            print "Epoch ", epoch, "finalizada"
-            self.errors[0] = self.network.error(self.trainData[0], \
-                                        self.trainData[1], self.trainData[2])
-            print "Current Error IN: ", self.errors[0]
-            self.errors[1] = self.network.error(self.validationData[0], \
-                                self.validationData[1], self.validationData[2])
-            print "Current Error OUT: ", self.errors[1]
-
-        self.comm.barrier()
-        self.errors= self.comm.bcast(self.errors, 0)
+            if epoch == -1:
+                print "Calculando errores iniciales, antes de entrenar"
+                print "Previous Error IN: ", self.errors[0]
+                print "Previous Error OUT: ", self.errors[1]
+            else:
+                print "Epoch ", epoch, "finalizada"
+                print "Current Error IN: ", self.errors[0]
+                print "Current Error OUT: ", self.errors[1]
 
 
     def miniBatchError(self, miniBatchEpoch):
@@ -206,27 +211,33 @@ class MPINetwork:
                   self.miniBatchValidationSize * self.nProcesses
 
 
-    def scatterData(self, k):
+    def scatterData(self, k = -1):
+        batchSize = self.miniBatchSize if k == -1 \
+                                        else int(self.nTotalSamples[0] / self.nProcesses)
+
         if self.inputDimension == 1:
-            x_shape = (self.miniBatchSize, self.nChannels, \
+            x_shape = (batchSize, self.nChannels, \
                         self.inputSizeChannels[0])
         elif self.inputDimension == 2:
-            x_shape = (self.miniBatchSize, self.nChannels, \
+            x_shape = (batchSize, self.nChannels, \
                         self.inputSizeChannels[0], self.inputSizeChannels[1])
         x_train = np.zeros(x_shape)
-        x_extra_train = np.zeros((self.miniBatchSize, self.nInputsExtra))
-        y_train = np.zeros((self.miniBatchSize, self.outputSize))
+        x_extra_train = np.zeros((batchSize, self.nInputsExtra))
+        y_train = np.zeros((batchSize, self.outputSize))
 
         if self.rank == 0:
             trainData = DataManipulation.permute(self.trainData[0], \
                                     self.trainData[1], self.trainData[2])
-            scatteredX = trainData[0][k: k + \
-                            self.miniBatchSize * self.nProcesses]
-            scatteredXExtra = trainData[1][k: k + \
-                            self.miniBatchSize * self.nProcesses]
-            scatteredY = trainData[2][k: k + \
-                            self.miniBatchSize * self.nProcesses]
-        else:
+            if k == -1:
+                scatteredX, scatteredXExtra, scatteredY = trainData
+            else:
+                scatteredX = trainData[0][k: k + \
+                                self.miniBatchSize * self.nProcesses]
+                scatteredXExtra = trainData[1][k: k + \
+                                self.miniBatchSize * self.nProcesses]
+                scatteredY = trainData[2][k: k + \
+                                self.miniBatchSize * self.nProcesses]
+        else: # rank != 0
             scatteredX = scatteredY = None
             scatteredXExtra = []
         self.comm.Scatter(scatteredX, x_train, 0)
@@ -271,7 +282,6 @@ class MPINetwork:
             i = 0
             while k + self.miniBatchSize * self.nProcesses <= self.nTotalSamples[0]:
                 x_current, x_extra_current, y_current = self.scatterData(k)
-
                 # Entrenamiento
                 self.network.train(x_current, x_extra_current, y_current)
                 localDict = self.calcDeltas()
@@ -295,7 +305,7 @@ class MPINetwork:
     def run(self):
         self.buildNetwork()
         self.makeSaveDir()
-        self.initError()
+        self.fullEpochError(epoch = -1)
         self.train()
         self.saveNetwork()
         self.printFinalTime()
