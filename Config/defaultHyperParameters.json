@@ -1,0 +1,25 @@
+{
+	"channelReps":
+	[
+		["Conv-12-24", "Pool-Max-2"]
+	],
+	"fullLayersRep": ["Hidden-100", "Output-1"],
+	"inputDimension": 1, 
+	"inputSizeChannels": [141],
+	"nInputsExtra": 0,
+	"activationString": "Sigmoid",
+	"costString": "Quadratic",
+	"outputActivationString":"Identity",
+	"regularizationString": "L2Reg-1",
+
+	"miniBatchSize": 8,
+	"miniBatchValidationSize": 7,
+	"eta": 0.0001,
+	"learningScheduleString": "Adam",
+	"maxError": 0.0001,
+	"epsilonError": 0.05,
+	"monitorValidationError": true,
+
+	"epochSave": 100,
+	"networkLoadDir": ""
+}

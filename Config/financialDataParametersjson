@@ -1,0 +1,19 @@
+{
+	"regHorizon": 141,
+	"predHorizon": 60,
+	"dataInterval": 60,
+	"yRanges": 
+		[-20, -5, -1, -0.5, -0.1, -0.05, -0.01, -0.005, -0.001, 0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 20],
+	"year1Train": 2014,
+	"year2Train": 2014,
+	"month1Train": 1,
+	"month2Train": 12,
+	"year1Test": 2015,
+	"year2Test": 2015,
+	"month1Test": 1,
+	"month2Test": 10,
+	"xTrain": "xTrain.npy",
+	"yTrain": "yTrain.npy",
+	"xTest": "xTest.npy",
+	"yTest": "yTest.npy"
+}
