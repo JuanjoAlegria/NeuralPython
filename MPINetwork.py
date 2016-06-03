@@ -7,7 +7,7 @@ from Layers.PoolLayer import PoolLayer
 from LearningSchedules.AdaGrad import AdaGrad
 from LearningSchedules.Adam import Adam
 from LearningSchedules.SimpleEta import SimpleEta
-from Utils import Hyperparameters, ProcessData
+from Utils import Hyperparameters, DataManipulation
 
 class MPINetwork:
     def __init__(self):
@@ -218,7 +218,7 @@ class MPINetwork:
         y_train = np.zeros((self.miniBatchSize, self.outputSize))
 
         if self.rank == 0:
-            trainData = ProcessData.permute(self.trainData[0], \
+            trainData = DataManipulation.permute(self.trainData[0], \
                                     self.trainData[1], self.trainData[2])
             scatteredX = trainData[0][k: k + \
                             self.miniBatchSize * self.nProcesses]
