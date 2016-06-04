@@ -85,8 +85,9 @@ class MPINetwork:
 
     def setData(self, trainData, validationData, testData):
         if self.rank == 0:
-            self.trainData = trainData
-            self.totalTestData = testData
+            self.trainData = DataManipulation.permute(trainData[0], trainData[1], trainData[2])
+            self.totalTestData = DataManipulation.permute(testData[0], testData[1], testData[2])
+            validationData = DataManipulation.permute(validationData[0], validationData[1], validationData[2])
             self.nTotalSamples[0] = len(self.trainData[0])
 
             vData = []
