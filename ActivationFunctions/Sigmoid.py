@@ -8,5 +8,5 @@ class Sigmoid:
     def function(self, vector):
         return 1.0 / (1.0 + np.exp(-vector))
 
-    def derivative(self, actualOutput):
+    def derivative(self, actualOutput, desiredOutput = None):
         return self.function(actualOutput) * (1 - self.function(actualOutput))

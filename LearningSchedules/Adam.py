@@ -1,5 +1,6 @@
 import numpy as np
 
+# TODO: fix self.t (no es cada epoch)
 class Adam:
     def __init__(self, eta, beta1 = 0.8, beta2 = 0.9, epsilon = 1e-8):
         self.eta = eta
@@ -21,6 +22,7 @@ class Adam:
                                 (1 - self.beta1) * weightsDict[key]
                 self.v[key] = self.beta2 * self.v[key] + \
                                 (1 - self.beta2) * weightsDict[key]**2
+
 
             m = self.m[key] / (1 - self.beta1 ** self.t)
             v = self.v[key] / (1 - self.beta2 ** self.t)

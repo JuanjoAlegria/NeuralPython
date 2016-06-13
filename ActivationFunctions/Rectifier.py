@@ -9,7 +9,7 @@ class Rectifier:
 
     def derivative(self, vector):
         def singleDerivative(x):
-            if x > 0: return 1
+            if x >= 0: return 1
             else: return 0
         f = np.vectorize(singleDerivative)
         return f(vector)

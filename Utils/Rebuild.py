@@ -1,20 +1,25 @@
+# -*- coding: utf-8 -*-
+import os
 import numpy as np
 import Hyperparameters
 import matplotlib.pyplot as plt
-from NeuralPython.Network import Network
+from NeuralPython.Utils import Builders
 
+basePath = os.path.dirname(os.path.realpath(__file__))
 
-def rebuildSignal(listModelDirs, data, listErrors = []):
-    hpDict = Hyperparameters.buildFromArgs()
+def rebuildSignal(listModelDirs, data, listErrors = [], hpDict = None):
+    if hpDict is None:
+        hpDict = Hyperparameters.buildFromArgs()
+
     networks = []
     for d in listModelDirs:
-        network = Network.buildFromDict(hpDict)
-        dirName = "NetworksModels/" + d
+        network = Builders.buildNetwork(hpDict)
+        dirName = os.path.join(basePath, "../NetworksModels/" + d)
         network.load(dirName)
         networks.append(network)
 
     outputsTotal = []
-    xs, xes, ys = data
+    xs, ys = data
     errorsC1 = []
     errorsC2 = []
     for network in networks:
@@ -24,9 +29,7 @@ def rebuildSignal(listModelDirs, data, listErrors = []):
         for i in range(len(xs)):
             x = xs[i]
             y = ys[i]
-            xE = xes[i] if xes != [] else []
-
-            output = network.forwardOneSample(x, xE)
+            output = network.forward(x)
             outputs = np.append(outputs, output)
 
             e1 += (y - output)**2
@@ -40,7 +43,7 @@ def rebuildSignal(listModelDirs, data, listErrors = []):
     return outputsTotal, errorsC1, errorsC2
 
 def plotSignal(data, outputs, labels = [], title = "", xlabel = "", ylabel = ""):
-    xs, xes, ys = data
+    xs, ys = data
     ts = range(len(outputs[0]))
     if labels == []:
         labels = ["Datos experimentales " + str(i) for i in range(len(outputs))]
@@ -49,7 +52,7 @@ def plotSignal(data, outputs, labels = [], title = "", xlabel = "", ylabel = "")
     for i in range(len(outputs)):
         e, = plt.plot(ts, outputs[i], label = labels[i], marker='*')
         experimental.append(e)
-    reals, = plt.plot(ts, ys + xs[:, :, -1], label='Datos reales', marker='o')
+    reals, = plt.plot(ts, ys, label='Datos reales', marker='o')
     labels = experimental[:]
     labels.append(reals)
     plt.legend(handles=labels)

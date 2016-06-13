@@ -7,6 +7,6 @@ class LogLikelihood:
             desiredOutput = np.argmax(desiredOutput)
         return -np.log(actualOutput[desiredOutput]) + epsilon
     def derivative(self,actualOutput, desiredOutput):
+        # TODO : fix
         a_y = actualOutput[desiredOutput]
         return -1.0/a_y
-

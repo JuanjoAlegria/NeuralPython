@@ -1,7 +1,7 @@
 import numpy as np
-from AbstractLayer import AbstractLayer
-from ..CostFunctions.LogLikelihood import LogLikelihood
-from ..ActivationFunctions.Softmax import Softmax
+from NeuralPython.Layers.AbstractLayer import AbstractLayer
+from NeuralPython.CostFunctions.LogLikelihood import LogLikelihood
+from NeuralPython.ActivationFunctions.Softmax import Softmax
 
 class FullyConnectedLayer(AbstractLayer):
     def __init__(self, inputSize, nUnits, layerId, activationFunction, finalLayer = False):
@@ -9,11 +9,10 @@ class FullyConnectedLayer(AbstractLayer):
         self.nUnits = nUnits
         self.activationFunction = activationFunction
         self.finalLayer = finalLayer
-        # standardDeviation = 1.0 / np.sqrt(inputSize)
         self.weights = np.random.normal(0, 1.0 / inputSize, (nUnits, inputSize))
         self.biases = np.random.randn(nUnits)
-        self.deltaWeights = []
-        self.deltaBiases = []
+        self.deltaWeights = np.zeros(self.weights.shape)
+        self.deltaBiases = np.zeros(self.biases.shape)
         self.output = None
 
     def forward(self, x):
@@ -43,15 +42,13 @@ class FullyConnectedLayer(AbstractLayer):
         deltaWeights =  np.dot(reshapedDelta, reshapedInput.transpose())
 
         # guardar deltas
-        self.deltaWeights.append(deltaWeights)
-        self.deltaBiases.append(deltaBiases)
+        self.deltaWeights += deltaWeights
+        self.deltaBiases += deltaBiases
 
-
-        if type(self.previousLayer) == list:
-            for l in self.previousLayer: l.backward(deltas)
-        elif self.previousLayer != None:
-            self.previousLayer.backward(deltas)
-
+        if self.previousLayer is None:
+            return deltas
+        else:
+            return self.previousLayer.backward(deltas)
     def getWeights(self):
         return self.weights
 
@@ -59,20 +56,13 @@ class FullyConnectedLayer(AbstractLayer):
         return self.biases, self.weights
 
     def calculateParameters(self):
-        dWTotal = np.zeros(np.shape(self.weights))
-        dBTotal = np.zeros(np.shape(self.biases))
-
-        for dB, dw in zip(self.deltaBiases, self.deltaWeights):
-            dBTotal += dB
-            dWTotal += dw
-
-        return dBTotal, dWTotal
+        return self.deltaBiases, self.deltaWeights
 
     def updateParameters(self, biasesDelta, weightsDelta, regularization):
         self.biases -= biasesDelta
         self.weights -= weightsDelta + regularization.weightsDerivation(self.weights)
-        self.deltaWeights = []
-        self.deltaBiases = []
+        self.deltaWeights = np.zeros(self.weights.shape)
+        self.deltaBiases = np.zeros(self.biases.shape)
 
     def calculateDeltaOutputLayer(self, costFunction, desiredOutput):
         if isinstance(costFunction, LogLikelihood) \

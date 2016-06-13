@@ -1,8 +1,7 @@
-from AbstractLayer import AbstractLayer
-from ..PoolingFunctions.MaxPooling import MaxPooling
-from ..PoolingFunctions.MaxPooling2D import MaxPooling2D
-from FullyConnectedLayer import FullyConnectedLayer
-from FilterLayer import FilterLayer
+from NeuralPython.Layers.AbstractLayer import AbstractLayer
+from NeuralPython.Layers.FilterLayer import FilterLayer
+from NeuralPython.PoolingFunctions.MaxPooling import MaxPooling
+from NeuralPython.PoolingFunctions.MaxPooling2D import MaxPooling2D
 import numpy as np
 from scipy import signal
 
@@ -28,7 +27,7 @@ class PoolLayer(AbstractLayer):
         for i in range(self.nInputs):
             v = x[i]
             result.append(self.poolFunction.down(v, i))
-        if type(self.nextLayer) == FullyConnectedLayer:
+        if self.nextLayer is None:
             return result
         else:
             return self.nextLayer.forward(result)
@@ -36,18 +35,11 @@ class PoolLayer(AbstractLayer):
 
     def backward(self, dNext):
         deltas = []
-        if type(self.nextLayer) == FullyConnectedLayer:
-            wNext = self.nextLayer.getWeights()
-            reshapedDNext = np.reshape(dNext, (len(dNext), 1))
-            delta = np.dot(wNext.transpose(), reshapedDNext)
-
+        if self.nextLayer is None:
             singleOutputSize = self.inputSize.prod() / (self.step ** self.dimension)
-            outputSize = singleOutputSize * self.nInputs
-            start = self.channelId * outputSize
-            delta = delta[start : start + outputSize]
             for k in range(self.nInputs):
                 a = k*singleOutputSize
-                d = delta[a : a + singleOutputSize]
+                d = dNext[a : a + singleOutputSize]
                 if self.dimension == 2:
                     d = np.reshape(d, self.inputSize / self.step)
 
@@ -60,13 +52,19 @@ class PoolLayer(AbstractLayer):
             for i in range(self.nInputs):
                 delta = np.zeros(self.inputSize/self.step)
                 for j in range(len(dNext)):
-                    delta += signal.convolve(dNext[j], fNext[i][j], 'full')
+                    delta += signal.fftconvolve(dNext[j], fNext[i][j], 'full')
                 deltas.append(self.poolFunction.up(delta, i))
 
         self.previousLayer.backward(deltas)
 
     def getStepSize(self):
         return self.step
+
+    def getOutputSize(self):
+        return self.inputSize / self.step
+
+    def getNOutputs(self):
+        return self.nInputs
 
     def calculateParameters(self):
         return None, None

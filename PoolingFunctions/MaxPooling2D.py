@@ -4,7 +4,7 @@ class MaxPooling2D:
     def __init__(self, inputSize, step):
         self.inputSize = inputSize
         self.step = step
-        self.outputSize = inputSize / 2
+        self.outputSize = inputSize / step
         self.max = {}
 
     def down(self, x, nX):
@@ -20,6 +20,7 @@ class MaxPooling2D:
                 result[i/self.step,j/self.step] = x[max_i, max_j]
         self.max[nX] = maxIndexes
         return np.array(result).reshape(self.outputSize)
+
 
     def up(self, v, nX):
         maxIndexes = self.max[nX]

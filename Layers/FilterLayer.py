@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy import signal
-from AbstractLayer import AbstractLayer
+from NeuralPython.Layers.AbstractLayer import AbstractLayer
 
 class FilterLayer(AbstractLayer):
     def __init__(self, nInputs, inputSize, inputDimension, layerId, channelId, \
@@ -11,7 +11,6 @@ class FilterLayer(AbstractLayer):
         self.nFilters = nFilters
         self.filtersSize = filtersSize
         self.activationFunction = activationFunction
-        # standardDeviation = 1.0 / np.sqrt(inputSize)
         self.dimension = inputDimension
         if self.dimension == 1:
             filterShape = (self.nInputs, self.nFilters, self.filtersSize)
@@ -19,8 +18,8 @@ class FilterLayer(AbstractLayer):
             filterShape = (self.nInputs, self.nFilters, self.filtersSize, self.filtersSize)
         self.filters = np.random.normal(0, 1.0 / self.inputSize.prod(), filterShape)
         self.biases = np.random.randn(nFilters)
-        self.deltaBiases = []
-        self.deltaFilters = []
+        self.deltaBiases = np.zeros(self.biases.shape)
+        self.deltaFilters = np.zeros(self.filters.shape)
 
     def forward(self, x):
         zetas = []
@@ -30,7 +29,7 @@ class FilterLayer(AbstractLayer):
             for i in range(self.nInputs):
                 f = self.filters[i][j]
                 v = x[i]
-                conv = signal.convolve(v, f, 'valid')
+                conv = signal.fftconvolve(v, f, 'valid')
                 if s is None:
                     s = np.zeros(conv.shape)
                 s += conv
@@ -60,14 +59,13 @@ class FilterLayer(AbstractLayer):
         for j in range(self.nFilters):
             rDelta = self.flipArray(deltas[j])
             for i in range(self.nInputs):
-                deltaFilters[i][j] += self.flipArray(signal.convolve(self.input[i], rDelta, 'valid'))
+                deltaFilters[i][j] += self.flipArray(signal.fftconvolve(self.input[i], rDelta, 'valid'))
 
-        self.deltaFilters.append(deltaFilters)
-        self.deltaBiases.append(deltaBiases)
+        self.deltaFilters += deltaFilters
+        self.deltaBiases += deltaBiases
 
         if self.previousLayer != None:
             self.previousLayer.backward(deltas)
-
 
     def getFilters(self):
         return self.filters
@@ -75,20 +73,20 @@ class FilterLayer(AbstractLayer):
     def getParameters(self):
         return self.biases, self.filters
 
-    def calculateParameters(self):
-        dFTotal = np.zeros(np.shape(self.filters))
-        dBTotal = np.zeros(np.shape(self.biases))
-        for dB, dF in zip(self.deltaBiases, self.deltaFilters):
-            dBTotal += dB
-            dFTotal += dF
+    def getOutputSize(self):
+        return self.inputSize - self.filtersSize + 1
 
-        return dBTotal, dFTotal
+    def getNOutputs(self):
+        return self.nFilters
+
+    def calculateParameters(self):
+        return self.deltaBiases, self.deltaFilters
 
     def updateParameters(self, biasesDelta, filtersDelta, regularization):
         self.biases -= biasesDelta
         self.filters -= filtersDelta + regularization.weightsDerivation(self.filters)
-        self.deltaBiases = []
-        self.deltaFilters = []
+        self.deltaFilters = np.zeros(np.shape(self.filters))
+        self.deltaBiases = np.zeros(np.shape(self.biases))
 
     def save(self, directory):
         baseFilename = directory + "filterLayer" + str(self.layerId)

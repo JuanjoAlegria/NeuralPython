@@ -93,6 +93,8 @@ class Network:
             return NullReg()
 
     def buildChannels(self, channelReps):
+        if channelReps == "":
+            return None
         channels = []
         idFirstLayer = self.nLayers
         for i in range(len(channelReps)):
@@ -152,6 +154,8 @@ class Network:
         return result
 
     def tieLayers(self):
+        if self.channels is None:
+            return
         firstFullyConnectedLayer = self.fullyConnectedLayers[0]
         lastLayers = []
         for c in self.channels:
@@ -161,23 +165,29 @@ class Network:
 
         firstFullyConnectedLayer.setPreviousLayer(lastLayers)
 
-    def forwardOneSample(self, xChannels, xExtra):
-        results = {}
-        for i in range(len(self.channels)):
-            c = self.channels[i]
-            result = c.forward([xChannels[i]])
-            results[c.id] = result
+    def forwardOneSample(self, xs, xs_extra):
+        import pdb; pdb.set_trace()  # breakpoint f9fbadce //
 
-        inputFullyConnected = self.buildInputFullyConnected(results, xExtra)
+        if self.channels is not None:
+            results = {}
+            for i in range(len(self.channels)):
+                c = self.channels[i]
+                result = c.forward([xs[i]])
+                results[c.id] = result
+
+            inputFullyConnected = self.buildInputFullyConnected(results, xs_extra)
+        else:
+            inputFullyConnected = xs
+
         firstFCLayer = self.fullyConnectedLayers[0]
         finalResult = firstFCLayer.forward(inputFullyConnected)
         return finalResult
 
-    def evaluateOneSample(self, xChannels, xExtra, desiredOutput, epsilon):
-        # actualOutput = self.forwardOneSample(xChannels, xExtra)
+    def evaluateOneSample(self, xs, xs_extra, desiredOutput, epsilon):
+        # actualOutput = self.forwardOneSample(xs, xs_extra)
         # result = int(np.argmax(actualOutput) == desiredOutput)
         # return result
-        actualOutput = self.forwardOneSample(xChannels, xExtra)
+        actualOutput = self.forwardOneSample(xs, xs_extra)
         if self.outputSize == 1:
             return int(np.abs(actualOutput - desiredOutput) <= epsilon)
         else:
@@ -189,8 +199,8 @@ class Network:
         outputLayer = self.fullyConnectedLayers[-1]
         outputLayer.backward(None, desiredOutput, self.costFunction)
 
-    def trainOneSample(self, xChannels, xExtra, desiredOutput):
-        self.forwardOneSample(xChannels, xExtra)
+    def trainOneSample(self, xs, xs_extra, desiredOutput):
+        self.forwardOneSample(xs, xs_extra)
         self.backwardOneSample(desiredOutput)
 
     def train(self, xTrainChannels, xTrainExtra, yTrain):
