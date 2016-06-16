@@ -13,6 +13,7 @@ class FullyConnectedLayer(AbstractLayer):
         self.biases = np.random.randn(nUnits)
         self.deltaWeights = np.zeros(self.weights.shape)
         self.deltaBiases = np.zeros(self.biases.shape)
+        self.nSamples = 0.0
         self.output = None
 
     def forward(self, x):
@@ -44,6 +45,7 @@ class FullyConnectedLayer(AbstractLayer):
         # guardar deltas
         self.deltaWeights += deltaWeights
         self.deltaBiases += deltaBiases
+        self.nSamples += 1
 
         if self.previousLayer is None:
             return deltas
@@ -56,13 +58,14 @@ class FullyConnectedLayer(AbstractLayer):
         return self.biases, self.weights
 
     def calculateParameters(self):
-        return self.deltaBiases, self.deltaWeights
+        return self.deltaBiases / self.nSamples, self.deltaWeights / self.nSamples
 
     def updateParameters(self, biasesDelta, weightsDelta, regularization):
         self.biases -= biasesDelta
         self.weights -= weightsDelta + regularization.weightsDerivation(self.weights)
         self.deltaWeights = np.zeros(self.weights.shape)
         self.deltaBiases = np.zeros(self.biases.shape)
+        self.nSamples = 0.0
 
     def calculateDeltaOutputLayer(self, costFunction, desiredOutput):
         if isinstance(costFunction, LogLikelihood) \

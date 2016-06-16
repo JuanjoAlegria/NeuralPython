@@ -20,6 +20,7 @@ class FilterLayer(AbstractLayer):
         self.biases = np.random.randn(nFilters)
         self.deltaBiases = np.zeros(self.biases.shape)
         self.deltaFilters = np.zeros(self.filters.shape)
+        self.nSamples = 0.0
 
     def forward(self, x):
         zetas = []
@@ -63,6 +64,7 @@ class FilterLayer(AbstractLayer):
 
         self.deltaFilters += deltaFilters
         self.deltaBiases += deltaBiases
+        self.nSamples += 1
 
         if self.previousLayer != None:
             self.previousLayer.backward(deltas)
@@ -80,13 +82,14 @@ class FilterLayer(AbstractLayer):
         return self.nFilters
 
     def calculateParameters(self):
-        return self.deltaBiases, self.deltaFilters
+        return self.deltaBiases / self.nSamples , self.deltaFilters / self.nSamples
 
     def updateParameters(self, biasesDelta, filtersDelta, regularization):
         self.biases -= biasesDelta
         self.filters -= filtersDelta + regularization.weightsDerivation(self.filters)
         self.deltaFilters = np.zeros(np.shape(self.filters))
         self.deltaBiases = np.zeros(np.shape(self.biases))
+        self.nSamples = 0.0
 
     def save(self, directory):
         baseFilename = directory + "filterLayer" + str(self.layerId)

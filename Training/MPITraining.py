@@ -35,6 +35,7 @@ class MPITraining:
         self.miniTrainData = None
         self.miniValidationData = None
         self.shapes = None
+        self.dtypes = None
         # Save Parameters
         self.epochSave = None
         saveDir = "../NetworksModels/" + str(self.initTime) + "/"
@@ -74,12 +75,14 @@ class MPITraining:
             self.testData = testData
             self.validationData = validationData
 
-            self.shapes = self.getShapes(trainData)
+            self.shapes, self.dtypes = self.getShapesAndDTypes(trainData)
+
             self.nTotalSamples[0] = len(trainData[0])
             self.nTotalSamples[1] = len(validationData[0])
 
         self.comm.Barrier()
         self.shapes = self.comm.bcast(self.shapes)
+        self.dtypes = self.comm.bcast(self.dtypes)
         self.comm.Bcast(self.nTotalSamples)
 
         miniDatas = []
@@ -95,6 +98,7 @@ class MPITraining:
             print "Datos cargados"
             print "Número datos de entrenamiento = ", self.nTotalSamples[0]
             print "Número datos de validación: ", len(self.validationData[0])
+            print "Minibatch total", self.miniBatchSize * self.nProcesses
 
 
     def scatter(self, dataset, batchSize):
@@ -103,7 +107,7 @@ class MPITraining:
             shape[0] = batchSize
             shape[1:] = self.shapes[index]
 
-        recipients = [np.zeros(shape) for shape in shapes]
+        recipients = [np.zeros(shapes[i]).astype(self.dtypes[i]) for i in range(len(shapes))]
         for i in range(len(recipients)):
             self.comm.Scatter(dataset[i], recipients[i], 0)
         return recipients
@@ -112,7 +116,7 @@ class MPITraining:
         if self.rank == 0:
             self.trainData = DataManipulation.permute(*self.trainData)
 
-    def scatterTrainData(self, epoch = -1):
+    def scatterTrainData(self, epoch):
         batchSize = self.miniBatchSize
         dataset = []
         if self.rank == 0:
@@ -164,7 +168,7 @@ class MPITraining:
 
 
     def calcAccuracy(self, miniBatchEpoch):
-        # if self.currentEpoch % 5 != 0: return
+        if self.currentEpoch % 10 != 0: return
 
         partialTestResult = np.zeros(1)
         partialTestResult[0] = self.network.test(self.miniValidationData, \
@@ -181,7 +185,6 @@ class MPITraining:
 
 
     def calcDeltas(self):
-        # Calcular deltas en cada proceso
         localDict = {}
         for layer in self.network:
             if isinstance(layer, PoolLayer):
@@ -198,6 +201,7 @@ class MPITraining:
         for key in localDict:
             totalDict[key] = np.zeros(np.shape(localDict[key]))
             self.comm.Allreduce(localDict[key], totalDict[key], MPI.SUM)
+            totalDict[key] /= self.nProcesses
 
         nSamples = self.miniBatchSize * self.nProcesses
         self.learningSchedule.update(totalDict, nSamples)
@@ -224,11 +228,11 @@ class MPITraining:
                 self.network.train(currentTrainData)
                 localDict = self.calcDeltas()
                 self.updateWeights(localDict)
-                self.calcAccuracy(i)
 
                 k += self.miniBatchSize * self.nProcesses
                 i += 1
 
+            self.calcAccuracy(i)
             self.calcError()
             self.currentEpoch += 1
             if self.epochSave != 0  and self.currentEpoch % self.epochSave == 0:
@@ -240,16 +244,18 @@ class MPITraining:
             deltaTime = currentTime - self.initTime
             print "Han transcurrido ", deltaTime, " segundos"
 
-    def getShapes(self, dataset):
-        result = []
+    def getShapesAndDTypes(self, dataset):
+        shapes = []
+        dtypes = []
         for d in dataset:
             totalShape = d.shape
             if len(totalShape) < 2:
                 shapeOneSample = np.array([1])
             else:
                 shapeOneSample = totalShape[1:]
-            result.append(shapeOneSample)
-        return result
+            shapes.append(shapeOneSample)
+            dtypes.append(d.dtype)
+        return shapes, dtypes
 
     def run(self):
         self.makeSaveDir()
