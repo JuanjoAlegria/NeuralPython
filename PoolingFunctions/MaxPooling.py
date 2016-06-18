@@ -6,7 +6,7 @@ class MaxPooling:
         self.step = step
         self.max = {}
 
-    def down(self, x, nX):
+    def down(self, x, nX, test = False):
         maxIndexes = []
         result = []
         for i in range(0, self.inputSize[0], self.step):
@@ -14,7 +14,8 @@ class MaxPooling:
             max_i = max_i + i
             maxIndexes.append(max_i)
             result.append(x[max_i])
-        self.max[nX] = maxIndexes
+        if not test:
+            self.max[nX] = maxIndexes
         return np.array(result)
 
     def up(self, v, nX):

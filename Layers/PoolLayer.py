@@ -22,11 +22,11 @@ class PoolLayer(AbstractLayer):
         else:
             raise Exception()
 
-    def forward(self, x):
+    def forward(self, x, test = False):
         result = []
         for i in range(self.nInputs):
             v = x[i]
-            result.append(self.poolFunction.down(v, i))
+            result.append(self.poolFunction.down(v, i, test ))
         if self.nextLayer is None:
             return result
         else:

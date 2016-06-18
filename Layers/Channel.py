@@ -24,8 +24,8 @@ class Channel:
     def getNLayers(self):
         return len(self.layers)
 
-    def forward(self, xTrain):
-        return self.layers[0].forward(xTrain)
+    def forward(self, xTrain, test = False):
+        return self.layers[0].forward(xTrain, test)
 
     def backward(self, deltas):
         return self.layers[-1].backward(deltas)

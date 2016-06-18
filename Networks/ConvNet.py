@@ -38,11 +38,11 @@ class ConvNet:
             s += c.getOutputSize()
         return s
 
-    def forward(self, x):
+    def forward(self, x, test = False):
         results = {}
         for i in range(len(self.channels)):
             c = self.channels[i]
-            result = c.forward([x[i]])
+            result = c.forward([x[i]], test)
             results[c.id] = result
         return results
 

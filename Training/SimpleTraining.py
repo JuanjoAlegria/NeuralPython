@@ -32,6 +32,8 @@ class SimpleTraining:
         saveDir = "../NetworksModels/" + str(self.initTime) + "/"
         self.saveDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), \
                                     saveDir)
+        self.bestResultDir = os.path.join(self.saveDir, "BestResult/")
+        self.bestResultValidation = float("inf")
         # Epsilon Error only in regression
         self.epsilonError = 0
 
@@ -76,14 +78,19 @@ class SimpleTraining:
 
     def makeSaveDir(self):
         os.makedirs(self.saveDir)
+        os.makedirs(self.bestResultDir)
 
     def saveNetwork(self):
-        print "Guardando red en directorio ", self.saveDir
-        self.network.save(self.saveDir)
+        if (self.epochSave != 0  and self.currentEpoch % self.epochSave == 0):
+            print "Guardando red en directorio ", self.saveDir
+            self.network.save(self.saveDir)
+        if self.errors[1] < self.bestResultValidation:
+            print "Mejor resultado actualizado, guardando red en directorio ", \
+                                self.bestResultDir
+            self.network.save(self.bestResultDir)
+            self.bestResultValidation = self.errors[1]
 
     def calcError(self):
-        # if self.currentEpoch % 5 != 0: return
-
         self.errors[0] = self.network.error(self.trainData)
         self.errors[1] = self.network.error(self.validationData)
 
@@ -144,27 +151,16 @@ class SimpleTraining:
 
                 k += self.miniBatchSize
                 i += 1
+                self.learningSchedule.updateEpoch()
 
             self.calcAccuracy(i)
             self.calcError()
-            if self.epochSave != 0  and self.currentEpoch % self.epochSave == 0:
-                self.saveNetwork()
+            self.saveNetwork()
 
     def printFinalTime(self):
         currentTime = int(time.time())
         deltaTime = currentTime - self.initTime
         print "Han transcurrido ", deltaTime, " segundos"
-
-    def getShapes(self, dataset):
-        result = []
-        for d in dataset:
-            totalShape = d.shape
-            if len(totalShape) < 2:
-                shapeOneSample = np.array([1])
-            else:
-                shapeOneSample = totalShape[1:]
-            result.append(shapeOneSample)
-        return result
 
     def run(self):
         self.makeSaveDir()

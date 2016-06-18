@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from NeuralPython.ActivationFunctions.Identity import Identity
 from NeuralPython.ActivationFunctions.Rectifier import Rectifier
 from NeuralPython.ActivationFunctions.Sigmoid import Sigmoid
@@ -88,14 +89,14 @@ def buildNetwork(d):
         inputSizeChannels = np.array(d['inputSizeChannels'])
         net = buildConvNetwork(channelsRep, inputSizeChannels,\
                                activationFunction, regularizationFunction, 0)
-        return net
+
     elif networkType == "feedforwardnet":
         ffRep = d['feedForwardRep']
         inputSize = d['inputSize']
         net = buildFFNetwork(ffRep, inputSize, activationFunction, \
                              outputActivationFunction, costFunction, \
                              regularizationFunction, regression, 0)
-        return net
+
     elif networkType == "convandffnet":
         channelsRep = d['channelsRep']
         ffRep = d['feedForwardRep']
@@ -105,9 +106,17 @@ def buildNetwork(d):
         net = buildConvFFNet(channelsRep, ffRep, inputSizeChannels, nInputsExtra, \
                         activationFunction, costFunction, outputActivationFunction, \
                         regularizationFunction, regression)
-        return net
 
-    raise Exception()
+    if "networkLoadDir" in d and d["networkLoadDir"] != "":
+        basePath = os.path.dirname(os.path.realpath(__file__))
+        networksModelsDir = "../NetworksModels/"
+        path = os.path.join(basePath, networksModelsDir)
+        path = os.path.join(path, d["networkLoadDir"])
+        net.load(path)
+        print "Cargando red desde ", path
+
+    return net
+
 
 
 def buildConvNetwork(channelsRep, inputSizeChannels, \

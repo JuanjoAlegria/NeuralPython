@@ -22,7 +22,7 @@ class FilterLayer(AbstractLayer):
         self.deltaFilters = np.zeros(self.filters.shape)
         self.nSamples = 0.0
 
-    def forward(self, x):
+    def forward(self, x, test = False):
         zetas = []
         result = []
         for j in range(self.nFilters):
@@ -38,9 +38,9 @@ class FilterLayer(AbstractLayer):
             a = self.activationFunction.function(z)
             zetas.append(z)
             result.append(a)
-
-        self.input = x
-        self.z = zetas
+        if not test:
+            self.input = x
+            self.z = zetas
         return self.nextLayer.forward(result)
 
     def backward(self, dNext):

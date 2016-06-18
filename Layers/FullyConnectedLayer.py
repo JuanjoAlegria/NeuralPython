@@ -16,12 +16,16 @@ class FullyConnectedLayer(AbstractLayer):
         self.nSamples = 0.0
         self.output = None
 
-    def forward(self, x):
-        self.z = np.dot(self.weights, x) + self.biases
-        self.input = x
-        result = self.activationFunction.function(self.z)
+    def forward(self, x, test = False):
+        z = np.dot(self.weights, x) + self.biases
+        result = self.activationFunction.function(z)
+        if not test:
+            self.input = x
+            self.z = z
+
         if self.finalLayer:
-            self.output = result
+            if not test:
+                self.output = result
             return result
 
         return self.nextLayer.forward(result)

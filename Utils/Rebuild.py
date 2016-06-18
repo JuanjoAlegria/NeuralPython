@@ -7,7 +7,7 @@ from NeuralPython.Utils import Builders
 
 basePath = os.path.dirname(os.path.realpath(__file__))
 
-def rebuildSignal(listModelDirs, data, listErrors = [], hpDict = None):
+def rebuildSignal(listModelDirs, data, hpDict = None):
     if hpDict is None:
         hpDict = Hyperparameters.buildFromArgs()
 

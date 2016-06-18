@@ -2,7 +2,7 @@
 import numpy as np
 
 def naiveAlgorithm(data):
-    xs, xes, ys = data
+    xs, ys = data
 
     eC1 = 0
     eC2 = 0
@@ -11,7 +11,6 @@ def naiveAlgorithm(data):
     for i in range(len(xs)):
         x = xs[i]
         y = ys[i]
-
         output = x[0,-1]
         outputs = np.append(outputs, output)
 

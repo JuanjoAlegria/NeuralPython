@@ -32,8 +32,8 @@ class FeedForwardNet:
         for i in range(1, len(self.layers)):
             self.layers[i].setPreviousLayer(self.layers[i - 1])
 
-    def forward(self, x):
-        return self.layers[0].forward(x)
+    def forward(self, x, test = False):
+        return self.layers[0].forward(x, test)
 
     def backward(self, y):
         return self.layers[-1].backward(None, y, self.costFunction)
@@ -42,7 +42,7 @@ class FeedForwardNet:
         totalError = 0
         samples = zip(*data)
         for sample in samples:
-            result = self.forward(*sample[:-1])
+            result = self.forward(*sample[:-1], test = True)
             totalError += self.costFunction.function(result, sample[-1])
         return 1.0 * totalError / len(data[0])
 
@@ -61,7 +61,7 @@ class FeedForwardNet:
         return s
 
     def evaluateOneSample(self, sample, epsilon):
-        actualOutput = self.forward(*sample[:-1])
+        actualOutput = self.forward(*sample[:-1], test = True)
         desiredOutput = sample[-1]
         if self.regression:
             return int(np.abs(actualOutput - desiredOutput) <= epsilon)

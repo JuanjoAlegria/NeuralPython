@@ -41,6 +41,8 @@ class MPITraining:
         saveDir = "../NetworksModels/" + str(self.initTime) + "/"
         self.saveDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), \
                                     saveDir)
+        self.bestResultDir = os.path.join(self.saveDir, "BestResult/")
+        self.bestResultValidation = float("inf")
         # Epsilon Error only in regression
         self.epsilonError = 0
 
@@ -140,15 +142,20 @@ class MPITraining:
     def makeSaveDir(self):
         if self.rank == 0:
             os.makedirs(self.saveDir)
+            os.makedirs(self.bestResultDir)
 
     def saveNetwork(self):
         if self.rank == 0:
-            print "Guardando red en directorio ", self.saveDir
-            self.network.save(self.saveDir)
+            if (self.epochSave != 0  and self.currentEpoch % self.epochSave == 0):
+                print "Guardando red en directorio ", self.saveDir
+                self.network.save(self.saveDir)
+            if self.errors[1] < self.bestResultValidation:
+                print "Mejor resultado actualizado, guardando red en directorio ", \
+                                    self.bestResultDir
+                self.network.save(self.bestResultDir)
+                self.bestResultValidation = self.errors[1]
 
     def calcError(self):
-        # if self.currentEpoch % 5 != 0: return
-
         partialErrorsResult = np.zeros(2)
         partialErrorsResult[0] = self.network.error(self.miniTrainData)
         partialErrorsResult[1] = self.network.error(self.miniValidationData)
@@ -219,6 +226,7 @@ class MPITraining:
     def train(self):
         self.network.regularizationFunction.setEta(self.eta)
         while not self.stopTraining():
+            self.currentEpoch += 1
             k = 0
             i = 0
             self.permuteTrainData()
@@ -231,12 +239,11 @@ class MPITraining:
 
                 k += self.miniBatchSize * self.nProcesses
                 i += 1
+                self.learningSchedule.updateEpoch()
 
             self.calcAccuracy(i)
             self.calcError()
-            self.currentEpoch += 1
-            if self.epochSave != 0  and self.currentEpoch % self.epochSave == 0:
-                self.saveNetwork()
+            self.saveNetwork()
 
     def printFinalTime(self):
         if self.rank == 0:

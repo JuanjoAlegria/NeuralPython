@@ -35,10 +35,10 @@ class ConvAndFullyConnectedNet:
             self.backward(sample[-1])
 
 
-    def forward(self, x, xe = []):
-        convResults = self.convNet.forward(x)
+    def forward(self, x, xe = [], test = False):
+        convResults = self.convNet.forward(x, test)
         inputFF = self.buildInputFeedForward(convResults, xe)
-        finalResult = self.ffNet.forward(inputFF)
+        finalResult = self.ffNet.forward(inputFF, test)
         return finalResult
 
     def backward(self, y):
@@ -75,7 +75,7 @@ class ConvAndFullyConnectedNet:
 
 
     def evaluateOneSample(self, sample, epsilon):
-        actualOutput = self.forward(*sample[:-1])
+        actualOutput = self.forward(*sample[:-1], test = True)
         desiredOutput = sample[-1]
         if self.regression:
             return int(np.abs(actualOutput - desiredOutput) <= epsilon)
@@ -105,7 +105,7 @@ class ConvAndFullyConnectedNet:
         totalError = 0
         samples = zip(*data)
         for sample in samples:
-            result = self.forward(*sample[:-1])
+            result = self.forward(*sample[:-1], test = True)
             miniError = self.costFunction.function(result, sample[-1])
             totalError += miniError
         return 1.0 * totalError / N

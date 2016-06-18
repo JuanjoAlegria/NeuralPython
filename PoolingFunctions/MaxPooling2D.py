@@ -8,20 +8,20 @@ class MaxPooling2D:
         self.max = {}
         self.__INDEXES__ = np.arange(inputSize.prod()).reshape(inputSize)
 
-    def down2(self, x, nX):
-        maxIndexes = np.zeros(self.inputSize)
-        result = np.zeros(self.outputSize)
-        for i in range(0, self.inputSize[0], self.step):
-            for j in range(0, self.inputSize[1], self.step):
-                max_ij = np.argmax(x[i:i + self.step, j:j + self.step])
-                max_i = max_ij / self.step + i
-                max_j = max_ij % self.step + j
-                maxIndexes[max_i, max_j] = 1
-                result[i/self.step,j/self.step] = x[max_i, max_j]
-        self.max[nX] = maxIndexes
-        return np.array(result).reshape(self.outputSize)
+    # def down2(self, x, nX):
+    #     maxIndexes = np.zeros(self.inputSize)
+    #     result = np.zeros(self.outputSize)
+    #     for i in range(0, self.inputSize[0], self.step):
+    #         for j in range(0, self.inputSize[1], self.step):
+    #             max_ij = np.argmax(x[i:i + self.step, j:j + self.step])
+    #             max_i = max_ij / self.step + i
+    #             max_j = max_ij % self.step + j
+    #             maxIndexes[max_i, max_j] = 1
+    #             result[i/self.step,j/self.step] = x[max_i, max_j]
+    #     self.max[nX] = maxIndexes
+    #     return np.array(result).reshape(self.outputSize)
 
-    def down(self, x, nX):
+    def down(self, x, nX, test):
         sz = x.itemsize
         h,w = x.shape
         shape = (h/self.step, w/self.step, self.step, self.step)
@@ -43,9 +43,11 @@ class MaxPooling2D:
 
         result = x.take(abs_argmax).reshape(h/self.step, w/self.step)
 
-        abs_argmax = abs_argmax.reshape(h/self.step,w/self.step).repeat(self.step, axis = 0).repeat(self.step, axis = 1)
+        if not test:
+            abs_argmax = abs_argmax.reshape(h/self.step,w/self.step)  \
+                            .repeat(self.step, axis = 0).repeat(self.step, axis = 1)
 
-        self.max[nX] = (abs_argmax == self.__INDEXES__).astype(int)
+            self.max[nX] = (abs_argmax == self.__INDEXES__).astype(int)
         return result
 
     def up(self, v, nX):
