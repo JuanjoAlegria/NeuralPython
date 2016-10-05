@@ -1,42 +1,22 @@
+# -*- coding: utf-8 -*-
 import numpy as np
-from scipy.misc import logsumexp
+from AbstractActivationFunction import AbstractActivationFunction
 
-class Softmax:
-    def __init__(self):
-        pass
-
-    def function2(self, vector):
-        s = logsumexp(vector)
-        return np.exp(vector - s)
-
+class Softmax(AbstractActivationFunction):
+    """
+        Función de activación softmax, permite interpretar el vector de salida como una distribución de probabilidad
+    """
     def function(self, vector):
-        v2 = vector - np.max(vector)
-        return np.exp(v2) / np.sum(np.exp(v2))
+        """
+            Calcula f(x_i) = e**x_i / sum(vector), para todo x_i en el vector
+        """
+        v = vector - np.max(vector)
+        return np.exp(v) / np.sum(np.exp(v))
 
-    def derivative(self, actualOutput, desiredOutput):
+    def derivative(self, layerOutput, desiredOutput):
+        """
+            Calcula la derivada de la función softmax
+        """
         index_y = np.argmax(desiredOutput)
-        a_y = actualOutput[index_y]
-        return -a_y * (actualOutput - desiredOutput)
-
-
-if __name__ == '__main__':
-    s = Softmax()
-    vectors = []
-    for i in range(10):
-        vector = np.random.randint(0, 100, 20)
-        vectors.append(vector)
-
-    for v in vectors:
-        print v
-        r = s.function(v)
-        print r
-        print "Suma = ", np.sum(r)
-        print "Max = ", np.max(r)
-        print "Max index = ", np.argmax(r)
-        print "#####################"
-        r = s.function2(v)
-        print r
-        print "Suma = ", np.sum(r)
-        print "Max = ", np.max(r)
-        print "Max index = ", np.argmax(r)
-        print "#####################"
+        a_y = layerOutput[index_y]
+        return -a_y * (layerOutput - desiredOutput)

@@ -1,6 +1,6 @@
 import numpy as np
-
-class AdaGrad:
+from AbstractLearningSchedule import AbstractLearningSchedule
+class AdaGrad(AbstractLearningSchedule):
     def __init__(self, eta, forget = 0, etaDecay = False, \
                  etaDecayFactor = 0, etaDecayEpoch = 0):
         self.eta = eta

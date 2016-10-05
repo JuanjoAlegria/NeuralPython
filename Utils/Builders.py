@@ -13,8 +13,7 @@ from NeuralPython.Layers.Channel import Channel
 from NeuralPython.LearningSchedules.Adam import Adam
 from NeuralPython.LearningSchedules.AdaGrad import AdaGrad
 from NeuralPython.LearningSchedules.SimpleEta import SimpleEta
-from NeuralPython.Networks.ConvAndFullyConnectedNet import ConvAndFullyConnectedNet
-from NeuralPython.Networks.ConvNet import ConvNet
+from NeuralPython.Networks.ConvAndFullyConnectedNet import ConvNet, ConvAndFullyConnectedNet
 from NeuralPython.Networks.FeedForwardNet import FeedForwardNet
 from NeuralPython.RegularizationFunctions.L2Reg import L2Reg
 from NeuralPython.RegularizationFunctions.NullReg import NullReg
@@ -28,22 +27,25 @@ def buildTraining(d = None):
         d = Hyperparameters.buildFromArgs()
 
     # Mandatory Parameters
+    projectName = d['projectName']
     trainType = d['trainingType']
     if trainType.lower() == "mpi":
-        train = MPITraining()
+        train = MPITraining(projectName)
     elif trainType.lower() == "simple":
-        train = SimpleTraining()
+        train = SimpleTraining(projectName)
 
     miniBatchSize = d['miniBatchSize']
     eta = d['eta']
     learningString = d['learningScheduleString']
     epochSave = d['epochSave']
+    bestResultOn = d['bestResultOn']
+
 
     learningSchedule = buildLearningSchedule(learningString, eta)
 
     train.setTrainingHyperParameters(miniBatchSize, eta)
     train.setLearningSchedule(learningSchedule)
-    train.setLoadSaveParameters(epochSave)
+    train.setLoadSaveParameters(epochSave, bestResultOn)
 
     stopCriteria = d['stopCriteria']
 
@@ -83,14 +85,7 @@ def buildNetwork(d):
     else:
         outputActivationFunction = buildActivationFunction(outputActivationString)
 
-
-    if networkType == "convnet":
-        channelsRep = d['channelsRep']
-        inputSizeChannels = np.array(d['inputSizeChannels'])
-        net = buildConvNetwork(channelsRep, inputSizeChannels,\
-                               activationFunction, regularizationFunction, 0)
-
-    elif networkType == "feedforwardnet":
+    if networkType == "feedforwardnet":
         ffRep = d['feedForwardRep']
         inputSize = d['inputSize']
         net = buildFFNetwork(ffRep, inputSize, activationFunction, \
@@ -101,9 +96,7 @@ def buildNetwork(d):
         channelsRep = d['channelsRep']
         ffRep = d['feedForwardRep']
         inputSizeChannels = np.array(d['inputSizeChannels'])
-        nInputsExtra = d['nInputsExtra'] if 'nInputsExtra' in d \
-                                            else 0
-        net = buildConvFFNet(channelsRep, ffRep, inputSizeChannels, nInputsExtra, \
+        net = buildConvFFNet(channelsRep, ffRep, inputSizeChannels, \
                         activationFunction, costFunction, outputActivationFunction, \
                         regularizationFunction, regression)
 
@@ -121,7 +114,6 @@ def buildNetwork(d):
 
 def buildConvNetwork(channelsRep, inputSizeChannels, \
                      activationFunction, regularizationFunction, idFirstLayer):
-
     channels = buildChannels(channelsRep, inputSizeChannels, \
                                           activationFunction, idFirstLayer)
     convNet = ConvNet(channels, regularizationFunction)
@@ -137,14 +129,14 @@ def buildFFNetwork(feedForwardRep, inputSize, activationFunction, \
                             regularizationFunction, regression)
     return ffNet
 
-def buildConvFFNet(channelsRep, feedForwardRep, inputSizeChannels, nInputsExtra,
+def buildConvFFNet(channelsRep, feedForwardRep, inputSizeChannels,
                  activationFunction, costFunction, outputActivationFunction, \
                  regularizationFunction, regression):
 
     convNet = buildConvNetwork(channelsRep, inputSizeChannels, activationFunction, regularizationFunction, 0)
 
     nLayers = convNet.getNLayers()
-    inputFeedForward = convNet.getOutputSize() + nInputsExtra
+    inputFeedForward = convNet.getOutputSize()
     ffNet = buildFFNetwork(feedForwardRep, inputFeedForward, activationFunction, outputActivationFunction, costFunction, regularizationFunction, regression, nLayers)
 
     return ConvAndFullyConnectedNet(convNet, ffNet, costFunction, \

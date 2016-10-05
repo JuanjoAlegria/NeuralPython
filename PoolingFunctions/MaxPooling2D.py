@@ -1,6 +1,6 @@
 import numpy as np
-
-class MaxPooling2D:
+from AbstractPoolingFunction import AbstractPoolingFunction
+class MaxPooling2D(AbstractPoolingFunction):
     def __init__(self, inputSize, step):
         self.inputSize = inputSize
         self.step = step
@@ -8,18 +8,6 @@ class MaxPooling2D:
         self.max = {}
         self.__INDEXES__ = np.arange(inputSize.prod()).reshape(inputSize)
 
-    # def down2(self, x, nX):
-    #     maxIndexes = np.zeros(self.inputSize)
-    #     result = np.zeros(self.outputSize)
-    #     for i in range(0, self.inputSize[0], self.step):
-    #         for j in range(0, self.inputSize[1], self.step):
-    #             max_ij = np.argmax(x[i:i + self.step, j:j + self.step])
-    #             max_i = max_ij / self.step + i
-    #             max_j = max_ij % self.step + j
-    #             maxIndexes[max_i, max_j] = 1
-    #             result[i/self.step,j/self.step] = x[max_i, max_j]
-    #     self.max[nX] = maxIndexes
-    #     return np.array(result).reshape(self.outputSize)
 
     def down(self, x, nX, test):
         sz = x.itemsize

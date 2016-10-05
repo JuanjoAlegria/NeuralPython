@@ -1,4 +1,5 @@
-class L2Reg:
+from AbstractRegularizationFunction import AbstractRegularizationFunction
+class L2Reg(AbstractRegularizationFunction):
     def __init__(self, lambdaReg):
         self.lambdaReg = lambdaReg
         self.eta = 0

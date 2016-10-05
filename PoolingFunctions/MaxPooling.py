@@ -1,12 +1,12 @@
 import numpy as np
-
-class MaxPooling:
+from AbstractPoolingFunction import AbstractPoolingFunction
+class MaxPooling(AbstractPoolingFunction):
     def __init__(self, inputSize, step):
         self.inputSize = inputSize
         self.step = step
         self.max = {}
 
-    def down(self, x, nX, test = False):
+    def down(self, x, nX, test):
         maxIndexes = []
         result = []
         for i in range(0, self.inputSize[0], self.step):

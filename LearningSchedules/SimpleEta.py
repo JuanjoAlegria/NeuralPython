@@ -1,4 +1,5 @@
-class SimpleEta:
+from AbstractLearningSchedule import AbstractLearningSchedule
+class SimpleEta(AbstractLearningSchedule):
     def __init__(self, eta, etaDecay = False, etaDecayFactor = 0, etaDecayEpoch = 0):
         self.eta = 1.0 * eta
         self.epoch = 1

@@ -1,6 +1,6 @@
 import numpy as np
-
-class Adam:
+from AbstractLearningSchedule import AbstractLearningSchedule
+class Adam(AbstractLearningSchedule):
     def __init__(self, eta, beta1 = 0.8, beta2 = 0.9, epsilon = 1e-8, etaDecay = False, etaDecayFactor = 0, etaDecayEpoch = 0):
         self.eta = eta
         self.beta1 = beta1
@@ -32,4 +32,4 @@ class Adam:
     def updateEpoch(self):
         self.epoch += 1
         if self.etaDecay and (self.epoch % self.etaDecayEpoch == 0):
-            self.epoch *= self.etaDecayFactor
+            self.eta *= self.etaDecayFactor

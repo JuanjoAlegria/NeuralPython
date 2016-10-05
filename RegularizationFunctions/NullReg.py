@@ -1,4 +1,5 @@
-class NullReg:
+from AbstractRegularizationFunction import AbstractRegularizationFunction
+class NullReg(AbstractRegularizationFunction):
     def __init__(self):
         pass
 
