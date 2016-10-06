@@ -1,9 +1,6 @@
 NeuralPython package
 ====================
 
-Subpackages
------------
-
 .. toctree::
 
     NeuralPython.ActivationFunctions

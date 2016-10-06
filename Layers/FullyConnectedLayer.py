@@ -30,7 +30,7 @@ class FullyConnectedLayer(AbstractLayer):
 
         return self.nextLayer.forward(result)
 
-    def backward(self, dNext = None, desiredOutput = None, costFunction = None):
+    def backward(self, dNext = None,    desiredOutput = None, costFunction = None):
         if self.finalLayer:
             deltas = self.calculateDeltaOutputLayer(costFunction, desiredOutput)
         else:
