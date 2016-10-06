@@ -55,6 +55,7 @@ class FullyConnectedLayer(AbstractLayer):
             return deltas
         else:
             return self.previousLayer.backward(deltas)
+
     def getWeights(self):
         return self.weights
 

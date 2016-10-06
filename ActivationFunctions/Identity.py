@@ -3,18 +3,25 @@ import numpy as np
 from AbstractActivationFunction import AbstractActivationFunction
 class Identity(AbstractActivationFunction):
     """
-        Función de activación identidad, útil para modelar regresión
+        Función de activación identidad, útil para modelar regresión. Esta función se define como
+
+        .. math::
+            f(x) = x
+
+        y su derivada se calcula como
+
+        .. math::
+
+            f'(x) = 1
     """
 
     def function(self, vector):
-        """
-            Ejecuta la función Identidad, es decir, f(x) = x
+        """Calcula la función identidad sobre vector
         """
         return vector
 
     def derivative(self, layerOutput, desiredOutput = None):
+        """Calcula la derivada de la función identidad sobre layerOutput
         """
-            Calcula la derivada de la función identidad,
-            es decir, df(x) / dx = [1, 1, ..., 1]
-        """
+
         return np.ones(layerOutput.shape)

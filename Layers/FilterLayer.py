@@ -4,30 +4,29 @@ from scipy import signal
 from NeuralPython.Layers.AbstractLayer import AbstractLayer
 
 class FilterLayer(AbstractLayer):
-    """
-        Capa de Filtros, utilizada en redes neuronales convolucionales
+    """Capa de Filtros, utilizada en redes neuronales convolucionales
     """
     def __init__(self, nInputs, inputSize, inputDimension, layerId, channelId, \
                  nFilters, filtersSize, activationFunction):
 
-        """
-            Inicializa una FilterLayer
-            :param nInputs: número de entradas que tendrá la red
-            :type nInputs: int
-            :param inputSize: tamaño de cada entrada de la red, puede tener más de una dimensión
-            :type inputSize: numpy.ndarray
-            :param inputDimension: dimensión de inputSize
-            :type inputDimension: int
-            :param layerId: id de la capa
-            :type layerId: int
-            :param channelId: id del canal donde se encuentra la capa
-            :type channelId: int
-            :param nFilters: número de filtros a utilizar
-            :type nFilters: int
-            :param filtersSize: tamaño de cada filtro; se asume que todos los filtros serán del mismo tamaño (y si es que se trabaja en más de una dimensión, el tamaño será el mismo en todas las dimensiones)
-            :type filtersSize: int
-            :param activationFunction: función de activación que se usará en esta capa
-            :type activationFunction: ActivactionFunction
+        """Inicializa una FilterLayer
+
+        :param nInputs: número de entradas que tendrá la red
+        :type nInputs: int
+        :param inputSize: tamaño de cada entrada de la red, puede tener más de una dimensión
+        :type inputSize: numpy.ndarray
+        :param inputDimension: dimensión de inputSize
+        :type inputDimension: int
+        :param layerId: id de la capa
+        :type layerId: int
+        :param channelId: id del canal donde se encuentra la capa
+        :type channelId: int
+        :param nFilters: número de filtros a utilizar
+        :type nFilters: int
+        :param filtersSize: tamaño de cada filtro; se asume que todos los filtros serán del mismo tamaño (y si es que se trabaja en más de una dimensión, el tamaño será el mismo en todas las dimensiones)
+        :type filtersSize: int
+        :param activationFunction: función de activación que se usará en esta capa
+        :type activationFunction: ActivactionFunction
         """
         super(FilterLayer, self).__init__(nInputs, inputSize, layerId, channelId)
         self.nFilters = nFilters
